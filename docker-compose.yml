@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  # ==========================================
+  # 1. PostgreSQL Database Service
+  # ==========================================
+  db:
+    image: postgres:16-alpine
+    container_name: vendora-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-vendora}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - vendora_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-vendora}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vendora-network
+
+  # ==========================================
+  # 2. Vendora Next.js 15 Web Application
+  # ==========================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vendora-web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-vendora}
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-https://placeholder-project.supabase.co}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-placeholder-anon-key}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-placeholder-service-key}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-vendora_webhook_secret_dev}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - vendora_uploads:/app/public/uploads
+    networks:
+      - vendora-network
+
+networks:
+  vendora-network:
+    driver: bridge
+
+volumes:
+  vendora_postgres_data:
+    driver: local
+  vendora_uploads:
+    driver: local

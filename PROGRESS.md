@@ -263,9 +263,12 @@
     - [x] Bật chế độ `output: "standalone"` trong `next.config.ts` để Next.js tạo gói bundle siêu gọn nhẹ.
     - [x] Xây dựng `Dockerfile` 4 tầng: `base` (Node 20 Alpine & pnpm) $\rightarrow$ `deps` (cài phụ thuộc) $\rightarrow$ `builder` (biên dịch production) $\rightarrow$ `runner` (chạy standalone dưới quyền user non-root `nextjs:nodejs`).
     - [x] Tạo `.dockerignore` loại trừ node_modules, .git, cache và các file nhạy cảm.
-- [ ] **Task 8.2: Tạo Docker Compose cho Local Full-Stack**
-  - Mục tiêu: Khởi chạy Postgres + App chỉ bằng một lệnh `docker-compose up -d`.
-  - Files dự kiến: `docker-compose.yml`
+- [x] **Task 8.2: Tạo Docker Compose cho Local Full-Stack**
+  - File: `docker-compose.yml`
+  - Chi tiết:
+    - [x] Khởi tạo service CSDL `db` (Postgres 16 Alpine) kèm healthcheck `pg_isready` và persistent volume.
+    - [x] Khởi tạo service `web` kết nối thông qua Docker bridge network, tự động chờ `db` healthy trước khi start.
+    - [x] Cấu hình volume độc lập `vendora_uploads` để bảo toàn file upload người dùng giữa các lần restart container.
 - [ ] **Task 8.3: Cấu hình GitHub Actions CI Pipeline**
   - Mục tiêu: Tự động chạy `pnpm lint`, `pnpm build`, và `pnpm test:e2e` trên mỗi Pull Request.
   - Files dự kiến: `.github/workflows/ci.yml`
