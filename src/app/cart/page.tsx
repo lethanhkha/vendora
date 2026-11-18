@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Store, Trash2, ShieldCheck, ArrowRight, CheckCircle2, CreditCard, Banknote, Sparkles, Truck, Tag, X } from "lucide-react";
+import { Store, Trash2, ShieldCheck, ArrowRight, CheckCircle2, CreditCard, Banknote, Sparkles, Truck, Tag, X, QrCode } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
 import { submitCheckoutAction } from "@/app/actions/checkout";
 import { validateVoucherAction } from "@/app/actions/voucher";
@@ -13,7 +13,7 @@ export default function CartPage() {
   const [recipientName, setRecipientName] = useState("Minh Anh");
   const [recipientPhone, setRecipientPhone] = useState("0988 123 456");
   const [shippingAddress, setShippingAddress] = useState("Số 15, Phố Tràng Tiền, Hoàn Kiếm, Hà Nội");
-  const [paymentMethod, setPaymentMethod] = useState<"COD" | "SANDBOX">("COD");
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "SANDBOX" | "VIETQR">("VIETQR");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<any>(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -341,6 +341,24 @@ export default function CartPage() {
               <label className="text-xs font-bold text-slate-700 block">Phương thức thanh toán:</label>
               
               <div
+                onClick={() => setPaymentMethod("VIETQR")}
+                className={`p-3 rounded-xl card-border cursor-pointer flex items-center justify-between text-xs transition ${
+                  paymentMethod === "VIETQR"
+                    ? "border-primary bg-indigo-50/50 text-primary font-bold shadow-sm"
+                    : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <QrCode className="w-4 h-4 text-primary" />
+                  <div>
+                    <span className="block font-bold">Chuyển khoản VietQR 24/7 (Khuyên Dùng)</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Quét mã QR tự động qua ứng dụng mọi ngân hàng</span>
+                  </div>
+                </div>
+                {paymentMethod === "VIETQR" && <CheckCircle2 className="w-4 h-4 text-primary" />}
+              </div>
+
+              <div
                 onClick={() => setPaymentMethod("COD")}
                 className={`p-3 rounded-xl card-border cursor-pointer flex items-center justify-between text-xs transition ${
                   paymentMethod === "COD"
@@ -365,7 +383,7 @@ export default function CartPage() {
               >
                 <div className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4" />
-                  <span>Sandbox Mock (VietQR / MoMo)</span>
+                  <span>Sandbox Mock (Giả lập thanh toán ngay)</span>
                 </div>
                 {paymentMethod === "SANDBOX" && <CheckCircle2 className="w-4 h-4 text-primary" />}
               </div>

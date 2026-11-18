@@ -9,7 +9,7 @@ export type CheckoutInput = {
   recipientName: string;
   recipientPhone: string;
   shippingAddress: string;
-  paymentMethod: "COD" | "SANDBOX";
+  paymentMethod: "COD" | "SANDBOX" | "VIETQR" | string;
   items: CartItem[];
   voucherDiscount?: number;
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -22,7 +22,9 @@ import {
   Copy,
   Check,
   AlertTriangle,
-  Star
+  Star,
+  QrCode,
+  RefreshCw
 } from "lucide-react";
 
 type OrderItemData = {
@@ -74,6 +76,51 @@ export function OrderSuccessTrackingClient({
 }) {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [currentPaymentStatus, setCurrentPaymentStatus] = useState(order.paymentStatus);
+  const [isSimulatingPayment, setIsSimulatingPayment] = useState(false);
+
+  // Poll payment status if still PENDING
+  useEffect(() => {
+    if (currentPaymentStatus === "PAID") return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/webhooks/payment?orderId=${order.id}`);
+        const data = await res.json();
+        if (data.isPaid) {
+          setCurrentPaymentStatus("PAID");
+        }
+      } catch (err) {
+        // Silent poll error
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [currentPaymentStatus, order.id]);
+
+  const handleSimulatePayment = async () => {
+    setIsSimulatingPayment(true);
+    try {
+      const res = await fetch("/api/webhooks/payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          amount: order.totalAmount,
+          transactionId: "TX-" + Date.now(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCurrentPaymentStatus("PAID");
+      }
+    } catch (err) {
+      console.error("Simulation error:", err);
+    } finally {
+      setIsSimulatingPayment(false);
+    }
+  };
 
   const formatVND = (amount: number | string) => {
     return new Intl.NumberFormat("vi-VN").format(Number(amount)) + " ₫";
@@ -173,9 +220,13 @@ export function OrderSuccessTrackingClient({
             <p className="text-base font-extrabold text-primary">
               {formatVND(order.totalAmount)}
             </p>
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${currentPaymentStatus === "PAID" ? "text-emerald-600" : "text-amber-600"}`}>
               <CheckCircle2 className="w-3 h-3" />
-              {order.paymentMethod === "SANDBOX" ? "VietQR Instant (PAID)" : "Thanh Toán Khi Nhận (COD)"}
+              {currentPaymentStatus === "PAID"
+                ? "Đã Thanh Toán (PAID)"
+                : order.paymentMethod === "COD"
+                ? "Thanh Toán Khi Nhận (COD)"
+                : "Chờ Chuyển Khoản (PENDING)"}
             </span>
           </div>
 
@@ -215,6 +266,149 @@ export function OrderSuccessTrackingClient({
             </p>
           </div>
         </div>
+
+        {/* VietQR Live Payment Card */}
+        {currentPaymentStatus === "PENDING" && (
+          <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-50/70 via-purple-50/30 to-slate-50 border border-primary/20 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-indigo-100 gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center shadow-md">
+                  <QrCode className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-dark flex items-center gap-2">
+                    <span>Thanh Toán Chuyển Khoản Qua VietQR 24/7</span>
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                      Chờ thanh toán
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Mở ứng dụng ngân hàng bất kỳ để quét mã QR và xác thực đơn hàng tự động
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs">
+                <span className="flex items-center gap-1.5 text-indigo-600 font-medium text-[11px]">
+                  <RefreshCw className="w-3 h-3 animate-spin text-primary" />
+                  Đang lắng nghe Webhook...
+                </span>
+                <button
+                  type="button"
+                  disabled={isSimulatingPayment}
+                  onClick={handleSimulatePayment}
+                  className="px-3.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs shadow-sm transition disabled:opacity-50"
+                >
+                  {isSimulatingPayment ? "Đang xử lý..." : "Mô Phỏng Đã Chuyển Khoản"}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              {/* QR Image */}
+              <div className="md:col-span-5 flex flex-col items-center justify-center p-4 bg-white rounded-2xl card-border shadow-sm">
+                <div className="w-56 h-56 relative bg-slate-50 rounded-xl overflow-hidden flex items-center justify-center p-2">
+                  <img
+                    src={`https://img.vietqr.io/image/MB-0987654321-compact2.png?amount=${Math.round(
+                      Number(order.totalAmount)
+                    )}&addInfo=${encodeURIComponent(
+                      order.orderNumber || order.id.slice(0, 8)
+                    )}&accountName=VENDORA%20PLATFORM%20ESCROW`}
+                    alt="VietQR Payment Code"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                  Chuẩn VietQR • Napas247 • Mọi Ngân Hàng & Ví Điện Tử
+                </p>
+              </div>
+
+              {/* Transfer Details */}
+              <div className="md:col-span-7 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-white rounded-xl card-border">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Ngân hàng</span>
+                    <span className="font-extrabold text-dark text-xs">MB Bank (Quân Đội)</span>
+                  </div>
+
+                  <div className="p-3 bg-white rounded-xl card-border flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Số tài khoản</span>
+                      <span className="font-mono font-extrabold text-primary text-sm">0987654321</span>
+                    </div>
+                    <button
+                      onClick={() => handleCopy("0987654321")}
+                      className="p-1.5 text-slate-400 hover:text-primary rounded-lg hover:bg-slate-50"
+                      title="Sao chép số tài khoản"
+                    >
+                      {copiedCode === "0987654321" ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  <div className="p-3 bg-white rounded-xl card-border">
+                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Chủ tài khoản</span>
+                    <span className="font-extrabold text-dark text-xs">VENDORA PLATFORM ESCROW</span>
+                  </div>
+
+                  <div className="p-3 bg-white rounded-xl card-border flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Số tiền cần chuyển</span>
+                      <span className="font-extrabold text-emerald-600 text-sm">
+                        {formatVND(order.totalAmount)}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleCopy(order.totalAmount.toString())}
+                      className="p-1.5 text-slate-400 hover:text-primary rounded-lg hover:bg-slate-50"
+                      title="Sao chép số tiền"
+                    >
+                      {copiedCode === order.totalAmount.toString() ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-indigo-50/80 border border-indigo-200/60 rounded-xl flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-[10px] text-indigo-700 uppercase font-bold block">
+                      Nội dung chuyển khoản (Bắt buộc giữ nguyên)
+                    </span>
+                    <span className="font-mono font-extrabold text-primary text-sm">
+                      {order.orderNumber || order.id.slice(0, 8)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleCopy(order.orderNumber || order.id.slice(0, 8))}
+                    className="p-1.5 text-primary hover:bg-white/80 rounded-lg"
+                    title="Sao chép nội dung chuyển khoản"
+                  >
+                    {copiedCode === (order.orderNumber || order.id.slice(0, 8)) ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <p className="text-[11px] text-slate-500 italic">
+                  💡 Sau khi chuyển khoản thành công, ngân hàng sẽ phát tín hiệu Webhook và trang này sẽ tự động chuyển sang trạng thái đã thanh toán.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Paid Confirmation Seal */}
+        {currentPaymentStatus === "PAID" && (
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0 font-bold">
+                ✓
+              </div>
+              <div>
+                <span className="font-extrabold block text-sm">Thanh Toán Đã Được Xác Nhận & Ký Quỹ An Toàn</span>
+                <span className="text-[11px] text-emerald-700">
+                  Khoản tiền đang được giữ tại Vendora Escrow Vault và chỉ được kết chuyển cho các xưởng sau 15 ngày kể từ khi bạn nhận đủ hàng.
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Split Delivery Telemetry - Individual Vendor Shipment Cards */}

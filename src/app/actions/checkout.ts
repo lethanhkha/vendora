@@ -9,7 +9,7 @@ export async function submitCheckoutAction(data: {
   recipientName: string;
   recipientPhone: string;
   shippingAddress: string;
-  paymentMethod: "COD" | "SANDBOX";
+  paymentMethod: "COD" | "SANDBOX" | "VIETQR";
   items: any[];
   voucherDiscount?: number;
 }) {

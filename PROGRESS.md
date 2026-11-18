@@ -227,9 +227,13 @@
 ---
 
 ### Giai đoạn 7: Các Tính Năng Nâng Cao Tiếp Theo (Should-Have & Polish)
-- [ ] **Task 7.1: Tích hợp Cổng Thanh Toán Thật (VNPay / VietQR Tự Động)**
-  - Mục tiêu: Thay thế nút sandbox thủ công bằng tạo mã QR động VietQR có chứa cú pháp chuyển khoản và webhook tự động xác nhận `PAID`.
-  - Files dự kiến: `src/modules/billing/vietqr-service.ts`, `src/app/api/webhooks/payment/route.ts`
+- [x] **Task 7.1: Tích hợp Cổng Thanh Toán VietQR Tự Động & Webhook**
+  - File: `src/modules/billing/vietqr-service.ts`, `src/app/api/webhooks/payment/route.ts`, `src/app/cart/page.tsx`, `src/components/order/OrderSuccessTrackingClient.tsx`, `src/app/actions/checkout.ts`
+  - Chi tiết:
+    - [x] Sinh mã VietQR động chuẩn Napas QuickLink 24/7 theo từng mã đơn hàng và số tiền chính xác.
+    - [x] Tạo Webhook API `/api/webhooks/payment` hỗ trợ cập nhật tự động `PAID` cho Master và Sub-Orders kèm kiểm tra chữ ký/secret.
+    - [x] Tạo endpoint GET polling cho client theo dõi trạng thái thanh toán thời gian thực.
+    - [x] Giao diện theo dõi đơn hàng tích hợp QR code động, bộ sao chép 1-click và nút mô phỏng Webhook kiểm thử.
 - [ ] **Task 7.2: Quản lý File & Ảnh Thực Tế (Cloudinary / Supabase Storage)**
   - Mục tiêu: Cho phép Vendor upload ảnh sản phẩm thực tế từ máy thay vì nhập URL tĩnh.
   - Files dự kiến: `src/shared/storage/upload-service.ts`, `src/app/api/upload/route.ts`
