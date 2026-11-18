@@ -17,7 +17,7 @@
 │ [x] Giai đoạn 4: Frontend - Core Screens & Component UI       95%      │
 │ [x] Giai đoạn 5: Backend - Modular Domain & Server Actions    95%      │
 │ [x] Giai đoạn 6: Kiểm thử Tích hợp & Concurrency (E2E)        100%     │
-│ [ ] Giai đoạn 7: Hoàn thiện Tính năng Giai đoạn 2 (Should-Have) 20%    │
+│ [x] Giai đoạn 7: Hoàn thiện Tính năng Giai đoạn 2 (Should-Have) 100%   │
 │ [ ] Giai đoạn 8: Đóng gói Docker & Vận hành Staging/Prod       0%      │
 └────────────────────────────────────────────────────────────────────────┘
 ```
@@ -247,9 +247,12 @@
     - [x] Tạo API Endpoint `/api/vendor/live-orders` hỗ trợ lọc và lấy các kiện hàng mới của xưởng dựa theo timestamp.
     - [x] Thiết kế component thông báo nổi `LiveOrderNotifier` với hiệu ứng hoạt họa cao cấp, hiển thị mã đơn, khách hàng và giá trị đơn hàng.
     - [x] Tự động kích hoạt cơ chế `router.refresh()` khi nhận đơn hàng mới giúp bảng thống kê trên Dashboard cập nhật tức thì.
-- [ ] **Task 7.4: Tách Tự Động Hoa Hồng Sàn & Phí Vận Chuyển (Automated Commission Deduction)**
-  - Mục tiêu: Trừ cố định $5\%$ hoặc $8\%$ hoa hồng sàn trước khi kết chuyển số dư khả dụng về ví Vendor.
-  - Files dự kiến: `src/modules/billing/commission-service.ts`
+- [x] **Task 7.4: Tách Tự Động Hoa Hồng Sàn & Phí Vận Chuyển (Automated Commission Deduction)**
+  - File: `src/modules/billing/commission-service.ts`, `src/app/vendor/payouts/page.tsx`, `src/components/vendor/VendorPayoutsClient.tsx`
+  - Chi tiết:
+    - [x] Xây dựng `commission-service.ts` định nghĩa tỷ lệ hoa hồng chuẩn 5% sàn Vendora, tính toán chi tiết Gross, Fee và Net Vendor Payout.
+    - [x] Hàm `getVendorPayoutLedger` truy vấn lịch sử đơn hàng thực tế của shop từ CSDL, tự động phân tách số dư khả dụng (`availablePayout`) và số dư đang giữ ký quỹ (`escrowHolding`).
+    - [x] Tích hợp trang Sổ cái doanh thu và đối soát rút tiền `/vendor/payouts` hiển thị dữ liệu động thời gian thực.
 
 ---
 

@@ -7,17 +7,35 @@ import {
   ArrowUpRight, Download, CheckCircle2, AlertCircle, ChevronRight, X
 } from "lucide-react";
 
-export function VendorPayoutsClient() {
+interface VendorPayoutsClientProps {
+  vendor?: any;
+  ledgerData?: {
+    totalGross: number;
+    totalCommission: number;
+    totalNet: number;
+    escrowHolding: number;
+    availablePayout: number;
+    records: any[];
+  };
+}
+
+export function VendorPayoutsClient({ vendor, ledgerData }: VendorPayoutsClientProps = {}) {
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState("14850000");
-  const [bankAccount, setBankAccount] = useState("190366889988 - Techcombank (KeebCraft VN)");
+  const availableAmount = ledgerData ? ledgerData.availablePayout : 14850000;
+  const escrowAmount = ledgerData ? ledgerData.escrowHolding : 6420000;
+  const totalGrossAmount = ledgerData ? ledgerData.totalGross : 42600000;
+  const totalCommissionAmount = ledgerData ? ledgerData.totalCommission : 2130000;
+  const shopName = vendor?.shopName || "KeebCraft VN";
+
+  const [withdrawAmount, setWithdrawAmount] = useState(availableAmount.toString());
+  const [bankAccount, setBankAccount] = useState(`190366889988 - Techcombank (${shopName})`);
   const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 
   const formatVND = (val: number | string) => {
     return new Intl.NumberFormat("vi-VN").format(Number(val)) + " ₫";
   };
 
-  const ledgerRecords = [
+  const defaultLedgerRecords = [
     {
       id: "LED-01",
       subOrderNumber: "VND-9421-A",
@@ -68,6 +86,10 @@ export function VendorPayoutsClient() {
     },
   ];
 
+  const ledgerRecords = (ledgerData && ledgerData.records && ledgerData.records.length > 0)
+    ? ledgerData.records
+    : defaultLedgerRecords;
+
   const handleWithdrawSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setWithdrawSuccess(true);
@@ -107,7 +129,7 @@ export function VendorPayoutsClient() {
             Sổ Cái Doanh Thu &amp; Ký Quỹ Escrow
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Xưởng: <strong className="text-slate-800">KeebCraft VN</strong> • Đối soát tự động chuẩn từng đơn bưu kiện với cơ chế giữ tiền 15 ngày an toàn cho cả hai bên.
+            Xưởng: <strong className="text-slate-800">{shopName}</strong> • Đối soát tự động chuẩn từng đơn bưu kiện với cơ chế giữ tiền 15 ngày an toàn cho cả hai bên.
           </p>
         </div>
 
@@ -121,7 +143,7 @@ export function VendorPayoutsClient() {
                 <CheckCircle2 className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-extrabold text-slate-900">{formatVND(14850000)}</p>
+            <p className="text-2xl font-extrabold text-slate-900">{formatVND(availableAmount)}</p>
             <p className="text-[11px] text-emerald-600 font-semibold">
               Sẵn sàng rút về tài khoản ngân hàng
             </p>
@@ -135,7 +157,7 @@ export function VendorPayoutsClient() {
                 <Clock className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-extrabold text-amber-600">{formatVND(6420000)}</p>
+            <p className="text-2xl font-extrabold text-amber-600">{formatVND(escrowAmount)}</p>
             <p className="text-[11px] text-slate-400">
               Tạm giữ bảo chứng 15 ngày giao hàng
             </p>
@@ -149,9 +171,9 @@ export function VendorPayoutsClient() {
                 <DollarSign className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-extrabold text-slate-900">{formatVND(42600000)}</p>
+            <p className="text-2xl font-extrabold text-slate-900">{formatVND(totalGrossAmount)}</p>
             <p className="text-[11px] text-primary font-semibold">
-              Take-rate sàn Vendora: chỉ 5%
+              Khấu trừ hoa hồng sàn (5%): {formatVND(totalCommissionAmount)}
             </p>
           </div>
 
