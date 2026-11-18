@@ -257,9 +257,12 @@
 ---
 
 ### Giai đoạn 8: Đóng Gói Docker & Vận Hành Staging/Production (DevOps & Deployment)
-- [ ] **Task 8.1: Tạo Dockerfile Đa Tầng (Multi-stage Build Dockerfile)**
-  - Mục tiêu: Đóng gói Next.js 15 standalone server tối ưu dung lượng image ($< 150\text{MB}$).
-  - Files dự kiến: `Dockerfile`, `.dockerignore`
+- [x] **Task 8.1: Tạo Dockerfile Đa Tầng (Multi-stage Build Dockerfile)**
+  - File: `Dockerfile`, `.dockerignore`, `next.config.ts`
+  - Chi tiết:
+    - [x] Bật chế độ `output: "standalone"` trong `next.config.ts` để Next.js tạo gói bundle siêu gọn nhẹ.
+    - [x] Xây dựng `Dockerfile` 4 tầng: `base` (Node 20 Alpine & pnpm) $\rightarrow$ `deps` (cài phụ thuộc) $\rightarrow$ `builder` (biên dịch production) $\rightarrow$ `runner` (chạy standalone dưới quyền user non-root `nextjs:nodejs`).
+    - [x] Tạo `.dockerignore` loại trừ node_modules, .git, cache và các file nhạy cảm.
 - [ ] **Task 8.2: Tạo Docker Compose cho Local Full-Stack**
   - Mục tiêu: Khởi chạy Postgres + App chỉ bằng một lệnh `docker-compose up -d`.
   - Files dự kiến: `docker-compose.yml`
