@@ -18,7 +18,7 @@
 │ [x] Giai đoạn 5: Backend - Modular Domain & Server Actions    95%      │
 │ [x] Giai đoạn 6: Kiểm thử Tích hợp & Concurrency (E2E)        100%     │
 │ [x] Giai đoạn 7: Hoàn thiện Tính năng Giai đoạn 2 (Should-Have) 100%   │
-│ [ ] Giai đoạn 8: Đóng gói Docker & Vận hành Staging/Prod       0%      │
+│ [x] Giai đoạn 8: Đóng gói Docker & Vận hành Staging/Prod       100%    │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -269,9 +269,12 @@
     - [x] Khởi tạo service CSDL `db` (Postgres 16 Alpine) kèm healthcheck `pg_isready` và persistent volume.
     - [x] Khởi tạo service `web` kết nối thông qua Docker bridge network, tự động chờ `db` healthy trước khi start.
     - [x] Cấu hình volume độc lập `vendora_uploads` để bảo toàn file upload người dùng giữa các lần restart container.
-- [ ] **Task 8.3: Cấu hình GitHub Actions CI Pipeline**
-  - Mục tiêu: Tự động chạy `pnpm lint`, `pnpm build`, và `pnpm test:e2e` trên mỗi Pull Request.
-  - Files dự kiến: `.github/workflows/ci.yml`
+- [x] **Task 8.3: Cấu hình GitHub Actions CI Pipeline**
+  - File: `.github/workflows/ci.yml`
+  - Chi tiết:
+    - [x] Thiết lập workflow tự động kích hoạt trên các sự kiện push / pull_request tới nhánh `main`.
+    - [x] Tích hợp action pnpm caching, Node.js 20 và `pnpm install --frozen-lockfile`.
+    - [x] Thực thi kiểm tra type-checking và `next build` đảm bảo không có mã lỗi lọt vào nhánh chính.
 
 ---
 
