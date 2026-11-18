@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Store, DollarSign, Package, AlertTriangle, Star, CheckCircle2, Plus, Printer, RefreshCw } from "lucide-react";
 import { adjustStockAction } from "@/app/actions/vendor";
+import { LiveOrderNotifier } from "@/components/vendor/LiveOrderNotifier";
 
 export function VendorDashboardClient({
   vendor,
@@ -44,6 +45,9 @@ export function VendorDashboardClient({
 
   return (
     <div className="space-y-8">
+      {/* Real-time Order Telemetry Listener */}
+      <LiveOrderNotifier vendorId={vendor.id} />
+
       {/* Header Studio Banner */}
       <div className="bg-white rounded-3xl card-border p-6 sm:p-8 flex flex-wrap items-center justify-between gap-4 shadow-soft">
         <div className="flex items-center gap-4">

@@ -241,9 +241,12 @@
     - [x] Tạo Route Handler `/api/upload` tiếp nhận FormData, xác thực định dạng ảnh (PNG, JPG, WEBP, GIF) và giới hạn 5MB.
     - [x] Cập nhật giao diện Vendor Studio Product Creation với nút tải tệp từ máy tính, thanh trạng thái tải lên và preview thời gian thực.
     - [x] Cấu hình `.gitignore` loại trừ thư mục `public/uploads/` đảm bảo kho mã nguồn luôn gọn gàng.
-- [ ] **Task 7.3: Thông Báo Thời Gian Thực Cho Vendor (Realtime Orders Notification)**
-  - Mục tiêu: Bắn thông báo realtime lên màn hình Vendor Dashboard ngay khi có khách đặt hàng thành công đơn của shop.
-  - Files dự kiến: `src/components/vendor/LiveOrderNotifier.tsx`
+- [x] **Task 7.3: Thông Báo Thời Gian Thực Cho Vendor (Realtime Orders Notification)**
+  - File: `src/app/api/vendor/live-orders/route.ts`, `src/components/vendor/LiveOrderNotifier.tsx`, `src/components/vendor/VendorDashboardClient.tsx`
+  - Chi tiết:
+    - [x] Tạo API Endpoint `/api/vendor/live-orders` hỗ trợ lọc và lấy các kiện hàng mới của xưởng dựa theo timestamp.
+    - [x] Thiết kế component thông báo nổi `LiveOrderNotifier` với hiệu ứng hoạt họa cao cấp, hiển thị mã đơn, khách hàng và giá trị đơn hàng.
+    - [x] Tự động kích hoạt cơ chế `router.refresh()` khi nhận đơn hàng mới giúp bảng thống kê trên Dashboard cập nhật tức thì.
 - [ ] **Task 7.4: Tách Tự Động Hoa Hồng Sàn & Phí Vận Chuyển (Automated Commission Deduction)**
   - Mục tiêu: Trừ cố định $5\%$ hoặc $8\%$ hoa hồng sàn trước khi kết chuyển số dư khả dụng về ví Vendor.
   - Files dự kiến: `src/modules/billing/commission-service.ts`
