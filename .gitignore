@@ -27,3 +27,7 @@ Thumbs.db
 # Graphify knowledge graph artifacts
 graphify-out/
 
+# User uploaded media
+public/uploads/
+
+

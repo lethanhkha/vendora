@@ -37,6 +37,36 @@ export function ProductCreationClient({ vendorId, categories }: ProductCreationC
   const [imageUrl, setImageUrl] = useState(
     "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80"
   );
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setImageUrl(data.url);
+      } else {
+        setUploadError(data.error || "Tải ảnh lên thất bại");
+      }
+    } catch (err: any) {
+      setUploadError(err.message || "Lỗi mạng khi tải lên ảnh");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Specifications
   const [materialSpec, setMaterialSpec] = useState("Gỗ óc chó đen Bắc Mỹ FAS 100%");
@@ -288,25 +318,52 @@ export function ProductCreationClient({ vendorId, categories }: ProductCreationC
                 </h3>
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-2">
-                  Đường dẫn ảnh bìa Studio (High-Res 1:1)
-                </label>
-                <div className="flex gap-4 items-center">
-                  <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative flex-shrink-0">
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-6 items-start">
+                  {/* Image Preview Box */}
+                  <div className="w-28 h-28 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative flex-shrink-0 shadow-sm">
                     <Image src={imageUrl} alt="Preview" fill className="object-cover" />
                   </div>
-                  <div className="flex-1">
-                    <input
-                      type="url"
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      placeholder="https://..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-800"
-                    />
-                    <p className="text-[11px] text-slate-400 mt-1">
-                      Khuyến nghị ảnh độ phân giải tối thiểu 1200x1200px với ánh sáng studio tự nhiên.
-                    </p>
+
+                  {/* Upload Controls */}
+                  <div className="flex-1 space-y-3 w-full">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                        Tải ảnh từ máy tính (Khuyên dùng)
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-50 border border-primary/30 text-primary text-xs font-bold hover:bg-indigo-100 cursor-pointer transition shadow-sm">
+                          <UploadCloud className="w-4 h-4" />
+                          <span>{isUploading ? "Đang tải ảnh lên..." : "Chọn tệp hình ảnh..."}</span>
+                          <input
+                            type="file"
+                            accept="image/png, image/jpeg, image/webp, image/gif"
+                            disabled={isUploading}
+                            onChange={handleFileUpload}
+                            className="hidden"
+                          />
+                        </label>
+                        <span className="text-[11px] text-slate-400">
+                          PNG, JPG, WEBP tối đa 5MB
+                        </span>
+                      </div>
+                      {uploadError && (
+                        <p className="text-[11px] text-red-500 font-semibold mt-1.5">{uploadError}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500 block mb-1">
+                        Hoặc nhập đường dẫn ảnh trực tiếp:
+                      </label>
+                      <input
+                        type="url"
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        placeholder="https://images.unsplash.com/..."
+                        className="w-full px-4 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-800"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

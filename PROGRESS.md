@@ -234,9 +234,13 @@
     - [x] Tạo Webhook API `/api/webhooks/payment` hỗ trợ cập nhật tự động `PAID` cho Master và Sub-Orders kèm kiểm tra chữ ký/secret.
     - [x] Tạo endpoint GET polling cho client theo dõi trạng thái thanh toán thời gian thực.
     - [x] Giao diện theo dõi đơn hàng tích hợp QR code động, bộ sao chép 1-click và nút mô phỏng Webhook kiểm thử.
-- [ ] **Task 7.2: Quản lý File & Ảnh Thực Tế (Cloudinary / Supabase Storage)**
-  - Mục tiêu: Cho phép Vendor upload ảnh sản phẩm thực tế từ máy thay vì nhập URL tĩnh.
-  - Files dự kiến: `src/shared/storage/upload-service.ts`, `src/app/api/upload/route.ts`
+- [x] **Task 7.2: Quản lý File & Ảnh Thực Tế (Cloudinary / Supabase Storage)**
+  - File: `src/shared/storage/upload-service.ts`, `src/app/api/upload/route.ts`, `src/components/vendor/ProductCreationClient.tsx`, `.gitignore`
+  - Chi tiết:
+    - [x] Xây dựng service upload hỗ trợ Supabase Storage bucket `products` và cơ chế fallback an toàn lưu trữ đĩa cục bộ `public/uploads/`.
+    - [x] Tạo Route Handler `/api/upload` tiếp nhận FormData, xác thực định dạng ảnh (PNG, JPG, WEBP, GIF) và giới hạn 5MB.
+    - [x] Cập nhật giao diện Vendor Studio Product Creation với nút tải tệp từ máy tính, thanh trạng thái tải lên và preview thời gian thực.
+    - [x] Cấu hình `.gitignore` loại trừ thư mục `public/uploads/` đảm bảo kho mã nguồn luôn gọn gàng.
 - [ ] **Task 7.3: Thông Báo Thời Gian Thực Cho Vendor (Realtime Orders Notification)**
   - Mục tiêu: Bắn thông báo realtime lên màn hình Vendor Dashboard ngay khi có khách đặt hàng thành công đơn của shop.
   - Files dự kiến: `src/components/vendor/LiveOrderNotifier.tsx`
