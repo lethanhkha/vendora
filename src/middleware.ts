@@ -51,14 +51,26 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
+    const role = user.user_metadata?.role;
+    if (role && role !== "VENDOR" && role !== "ADMIN") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/vendor/onboarding";
+      return NextResponse.redirect(url);
+    }
   }
 
-  // Protect admin routes
+  // Protect admin routes: strictly require ADMIN role
   if (pathname.startsWith("/admin")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
+    const role = user.user_metadata?.role;
+    if (role !== "ADMIN") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
       return NextResponse.redirect(url);
     }
   }

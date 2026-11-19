@@ -3,6 +3,7 @@
 import { db, vendorOrders, masterOrders, disputes, reviews, users, products } from "@/shared/db";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/app/actions/auth";
 
 function safeRevalidate(path: string) {
   try {
@@ -17,6 +18,29 @@ export async function updateVendorOrderStatusAction(
   newStatus: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED"
 ) {
   try {
+    const user = await getCurrentUser();
+    if (!user && process.env.NODE_ENV === "production") {
+      return { success: false, error: "Vui lòng đăng nhập để cập nhật trạng thái đơn hàng." };
+    }
+
+    const [targetOrder] = await db
+      .select()
+      .from(vendorOrders)
+      .where(eq(vendorOrders.id, vendorOrderId));
+
+    if (!targetOrder) {
+      return { success: false, error: "Không tìm thấy đơn hàng con của xưởng." };
+    }
+
+    if (user && user.role !== "ADMIN") {
+      if (!user.vendor || user.vendor.id !== targetOrder.vendorId) {
+        return {
+          success: false,
+          error: "Bạn không có quyền cập nhật đơn hàng thuộc gian hàng khác.",
+        };
+      }
+    }
+
     const [updated] = await db
       .update(vendorOrders)
       .set({
@@ -120,6 +144,14 @@ export async function resolveDisputeAction(
   adminNote?: string
 ) {
   try {
+    const user = await getCurrentUser();
+    if (user && user.role !== "ADMIN") {
+      return { success: false, error: "Chỉ quản trị viên hệ thống (Admin) mới có quyền xử lý khiếu nại." };
+    }
+    if (!user && process.env.NODE_ENV === "production") {
+      return { success: false, error: "Yêu cầu đăng nhập tài khoản quản trị viên." };
+    }
+
     const status = resolution === "REFUND_BUYER" ? "RESOLVED_REFUND" : "RESOLVED_REJECTED";
 
     const [dispute] = await db
@@ -156,6 +188,14 @@ export async function resolveDisputeAction(
 
 export async function getAllDisputesForAdmin() {
   try {
+    const user = await getCurrentUser();
+    if (user && user.role !== "ADMIN") {
+      throw new Error("Chỉ quản trị viên hệ thống (Admin) mới có quyền truy cập danh sách khiếu nại.");
+    }
+    if (!user && process.env.NODE_ENV === "production") {
+      throw new Error("Yêu cầu đăng nhập tài khoản quản trị viên.");
+    }
+
     const list = await db
       .select({
         id: disputes.id,
