@@ -1,4 +1,4 @@
-import { db, users, vendors, categories, products, productSkus, inventoryItems } from "../src/shared/db";
+import { db, users, vendors, categories, products, productSkus, inventoryItems, vouchers } from "../src/shared/db";
 import { hashPassword } from "../src/shared/auth/session";
 import * as dotenv from "dotenv";
 
@@ -332,6 +332,20 @@ async function seed() {
       reservedStock: 0,
     });
   }
+
+  // 5. Create default vouchers
+  console.log("Creating default vouchers...");
+  await db
+    .insert(vouchers)
+    .values({
+      code: "KEEB50K",
+      title: "Voucher Tri Ân Đánh Giá Nghệ Nhân",
+      discountType: "FIXED_AMOUNT",
+      discountValue: "50000.00",
+      minOrderAmount: "500000.00",
+      isActive: true,
+    })
+    .onConflictDoNothing();
 
   console.log("✅ Seed completed successfully with 3 Boutiques and 4 Products matching Stitch designs!");
   process.exit(0);
