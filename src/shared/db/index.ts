@@ -13,8 +13,15 @@ if (!connectionString) {
   throw new Error("Missing DATABASE_URL in environment variables.");
 }
 
-// Disable prefetch for compatibility with serverless and transaction poolers
-const client = postgres(connectionString, { prepare: false });
+// Configure robust connection pooling and SSL for cloud deployment
+const isProd = process.env.NODE_ENV === "production";
+const client = postgres(connectionString, {
+  prepare: false,
+  max: process.env.DB_MAX_CONNECTIONS ? Number(process.env.DB_MAX_CONNECTIONS) : 10,
+  idle_timeout: 20,
+  connect_timeout: 10,
+  ssl: isProd || process.env.DATABASE_SSL === "true" ? "require" : undefined,
+});
 
 export const db = drizzle(client, { schema });
 export type DB = typeof db;
