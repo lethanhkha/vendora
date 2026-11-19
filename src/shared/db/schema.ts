@@ -16,6 +16,7 @@ export const outboxStatusEnum = pgEnum("outbox_status", ["PENDING", "PROCESSED",
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: text("email").unique().notNull(),
+  passwordHash: text("password_hash"),
   fullName: text("full_name"),
   role: userRoleEnum("role").default("BUYER").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

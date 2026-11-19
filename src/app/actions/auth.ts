@@ -1,10 +1,17 @@
 "use server";
 
-import { createClient } from "@/shared/supabase/server";
 import { db, users, vendors } from "@/shared/db";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import {
+  hashPassword,
+  verifyPassword,
+  createSessionToken,
+  setSessionCookie,
+  clearSessionCookie,
+  getSessionPayload,
+} from "@/shared/auth/session";
 
 export type AuthResponse = {
   success: boolean;
@@ -22,48 +29,46 @@ export async function loginAction(formData: {
     return { success: false, error: "Vui lòng nhập đầy đủ email và mật khẩu." };
   }
 
+  const cleanEmail = email.toLowerCase().trim();
+
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      console.warn("[Auth] signInWithPassword error:", error.message);
-      return { success: false, error: error.message };
-    }
-
-    if (!data.user) {
-      return { success: false, error: "Không tìm thấy thông tin tài khoản." };
-    }
-
-    // Ensure database profile exists in `users`
-    let [dbUser] = await db.select().from(users).where(eq(users.email, email));
+    const [dbUser] = await db.select().from(users).where(eq(users.email, cleanEmail));
 
     if (!dbUser) {
-      const [created] = await db
-        .insert(users)
-        .values({
-          id: data.user.id,
-          email,
-          fullName: data.user.user_metadata?.full_name || email.split("@")[0],
-          role: (data.user.user_metadata?.role as any) || "BUYER",
-        })
-        .onConflictDoNothing()
-        .returning();
-
-      dbUser = created || (await db.select().from(users).where(eq(users.email, email)))[0];
+      return { success: false, error: "Tài khoản hoặc mật khẩu không chính xác." };
     }
+
+    // Verify password if hash exists, or auto-enroll password for existing demo accounts
+    if (dbUser.passwordHash) {
+      const isValid = verifyPassword(password, dbUser.passwordHash);
+      if (!isValid) {
+        return { success: false, error: "Tài khoản hoặc mật khẩu không chính xác." };
+      }
+    } else {
+      // First-time login for seeded account without password hash
+      const newHash = hashPassword(password);
+      await db
+        .update(users)
+        .set({ passwordHash: newHash, updatedAt: new Date() })
+        .where(eq(users.id, dbUser.id));
+    }
+
+    // Set secure session cookie
+    const token = createSessionToken({
+      id: dbUser.id,
+      email: dbUser.email,
+      role: dbUser.role,
+    });
+    await setSessionCookie(token);
 
     revalidatePath("/", "layout");
     return {
       success: true,
-      role: dbUser?.role || "BUYER",
-      userId: dbUser?.id,
+      role: dbUser.role,
+      userId: dbUser.id,
     };
   } catch (err: any) {
-    console.error("[loginAction] Exception:", err);
+    console.error("[loginAction] Error:", err);
     return { success: false, error: err.message || "Lỗi máy chủ khi đăng nhập." };
   }
 }
@@ -86,44 +91,23 @@ export async function signupAction(data: {
     return { success: false, error: "Mật khẩu phải có ít nhất 6 ký tự." };
   }
 
+  const cleanEmail = email.toLowerCase().trim();
+
   try {
-    const supabase = await createClient();
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          role,
-        },
-      },
-    });
-
-    if (authError) {
-      return { success: false, error: authError.message };
+    const [existing] = await db.select().from(users).where(eq(users.email, cleanEmail));
+    if (existing) {
+      return { success: false, error: "Email này đã được sử dụng. Vui lòng đăng nhập." };
     }
 
-    const authUserId = authData.user?.id;
-    if (!authUserId) {
-      return { success: false, error: "Không thể tạo tài khoản xác thực." };
-    }
+    const passwordHash = hashPassword(password);
 
-    // Insert or update in `users`
     const [dbUser] = await db
       .insert(users)
       .values({
-        id: authUserId,
-        email,
+        email: cleanEmail,
+        passwordHash,
         fullName,
         role,
-      })
-      .onConflictDoUpdate({
-        target: users.email,
-        set: {
-          fullName,
-          role,
-          updatedAt: new Date(),
-        },
       })
       .returning();
 
@@ -153,6 +137,13 @@ export async function signupAction(data: {
         .onConflictDoNothing();
     }
 
+    const token = createSessionToken({
+      id: dbUser.id,
+      email: dbUser.email,
+      role: dbUser.role,
+    });
+    await setSessionCookie(token);
+
     revalidatePath("/", "layout");
     return {
       success: true,
@@ -160,28 +151,23 @@ export async function signupAction(data: {
       userId: dbUser.id,
     };
   } catch (err: any) {
-    console.error("[signupAction] Exception:", err);
+    console.error("[signupAction] Error:", err);
     return { success: false, error: err.message || "Lỗi máy chủ khi đăng ký." };
   }
 }
 
 export async function logoutAction() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
+  await clearSessionCookie();
   revalidatePath("/", "layout");
   redirect("/login");
 }
 
 export async function getCurrentUser() {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const session = await getSessionPayload();
+    if (!session || !session.userId) return null;
 
-    if (!user || !user.email) return null;
-
-    const [dbUser] = await db.select().from(users).where(eq(users.email, user.email));
+    const [dbUser] = await db.select().from(users).where(eq(users.id, session.userId));
     if (!dbUser) return null;
 
     let vendor = null;

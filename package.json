@@ -14,8 +14,6 @@
     "test:e2e": "tsx scripts/test-e2e.ts"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.49.1",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.39.3",

@@ -1,42 +1,12 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { verifyEdgeSessionToken, SESSION_COOKIE_NAME } from "@/shared/auth/edge-session";
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return response;
-  }
-
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({
-          request,
-        });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        );
-      },
-    },
-  });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const pathname = request.nextUrl.pathname;
+
+  // Read native session cookie
+  const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const session = sessionToken ? await verifyEdgeSessionToken(sessionToken) : null;
 
   // Protect vendor studio routes
   if (
@@ -45,14 +15,13 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/vendor/orders") ||
     pathname.startsWith("/vendor/payouts")
   ) {
-    if (!user) {
+    if (!session) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
-    const role = user.user_metadata?.role;
-    if (role && role !== "VENDOR" && role !== "ADMIN") {
+    if (session.role !== "VENDOR" && session.role !== "ADMIN") {
       const url = request.nextUrl.clone();
       url.pathname = "/vendor/onboarding";
       return NextResponse.redirect(url);
@@ -61,21 +30,20 @@ export async function middleware(request: NextRequest) {
 
   // Protect admin routes: strictly require ADMIN role
   if (pathname.startsWith("/admin")) {
-    if (!user) {
+    if (!session) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
-    const role = user.user_metadata?.role;
-    if (role !== "ADMIN") {
+    if (session.role !== "ADMIN") {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       return NextResponse.redirect(url);
     }
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

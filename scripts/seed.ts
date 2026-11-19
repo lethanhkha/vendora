@@ -1,4 +1,5 @@
 import { db, users, vendors, categories, products, productSkus, inventoryItems } from "../src/shared/db";
+import { hashPassword } from "../src/shared/auth/session";
 import * as dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
@@ -7,45 +8,77 @@ async function seed() {
   console.log("🌱 Starting Vendora Seed Process...");
 
   // 1. Create Users
-  console.log("Creating default users...");
+  console.log("Creating default users with native auth credentials...");
+  const defaultPasswordHash = hashPassword("password123");
+
   const [buyerUser] = await db
     .insert(users)
     .values({
       email: "buyer@vendora.vn",
+      passwordHash: defaultPasswordHash,
       fullName: "Minh Anh",
       role: "BUYER",
     })
-    .onConflictDoNothing()
+    .onConflictDoUpdate({
+      target: users.email,
+      set: { passwordHash: defaultPasswordHash, updatedAt: new Date() },
+    })
+    .returning();
+
+  const [adminUser] = await db
+    .insert(users)
+    .values({
+      email: "admin@vendora.vn",
+      passwordHash: defaultPasswordHash,
+      fullName: "Quản Trị Viên Vendora",
+      role: "ADMIN",
+    })
+    .onConflictDoUpdate({
+      target: users.email,
+      set: { passwordHash: defaultPasswordHash, role: "ADMIN", updatedAt: new Date() },
+    })
     .returning();
 
   const [vendor1User] = await db
     .insert(users)
     .values({
       email: "keebcraft@vendora.vn",
+      passwordHash: defaultPasswordHash,
       fullName: "Tuấn Hoàng (KeebCraft)",
       role: "VENDOR",
     })
-    .onConflictDoNothing()
+    .onConflictDoUpdate({
+      target: users.email,
+      set: { passwordHash: defaultPasswordHash, updatedAt: new Date() },
+    })
     .returning();
 
   const [vendor2User] = await db
     .insert(users)
     .values({
       email: "auraleather@vendora.vn",
+      passwordHash: defaultPasswordHash,
       fullName: "Lê Nam (Aura Leather)",
       role: "VENDOR",
     })
-    .onConflictDoNothing()
+    .onConflictDoUpdate({
+      target: users.email,
+      set: { passwordHash: defaultPasswordHash, updatedAt: new Date() },
+    })
     .returning();
 
   const [vendor3User] = await db
     .insert(users)
     .values({
       email: "battrang@vendora.vn",
+      passwordHash: defaultPasswordHash,
       fullName: "Nghệ nhân Trần Bình",
       role: "VENDOR",
     })
-    .onConflictDoNothing()
+    .onConflictDoUpdate({
+      target: users.email,
+      set: { passwordHash: defaultPasswordHash, updatedAt: new Date() },
+    })
     .returning();
 
   // Retrieve user IDs

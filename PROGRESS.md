@@ -20,6 +20,7 @@
 │ [x] Giai đoạn 7: Hoàn thiện Tính năng Giai đoạn 2 (Should-Have) 100%   │
 │ [x] Giai đoạn 8: Đóng gói Docker & Vận hành Staging/Prod       100%    │
 │ [x] Giai đoạn 9: Sẵn Sàng Triển Khai Internet & Hardening       100%    │
+│ [x] Giai đoạn 10: Chuyển Sang Netlify & Neon Database (0đ)      100%    │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -323,6 +324,31 @@
 
 ---
 
+### Giai đoạn 10: Chuyển Đổi Sang Hạ Tầng Độc Lập — Netlify & Neon Database (0đ & Không Giới Hạn)
+- [x] **Task 10.1: Bỏ Hoàn Toàn Phụ Thuộc Supabase & Xây Dựng Native Auth**
+  - File: `src/shared/auth/session.ts`, `src/shared/auth/edge-session.ts`, `src/app/actions/auth.ts`, `src/shared/db/schema.ts`
+  - Chi tiết:
+    - [x] Thêm cột `password_hash` vào bảng `users`.
+    - [x] Triển khai hàm băm mật khẩu `hashPassword` & kiểm tra `verifyPassword` chuẩn PBKDF2 bằng thư viện `crypto` tích hợp sẵn.
+    - [x] Xây dựng cơ chế phát hành và xác minh Session Cookie `vendora_session` bằng thuật toán HMAC-SHA256 chuẩn Web Crypto.
+    - [x] Refactor toàn bộ `loginAction`, `signupAction`, `logoutAction`, `getCurrentUser` truy vấn trực tiếp CSDL PostgreSQL, loại bỏ SDK Supabase.
+- [x] **Task 10.2: Tối Ưu Hóa Middleware Siêu Tốc Cho Edge Runtime**
+  - File: `src/middleware.ts`
+  - Chi tiết:
+    - [x] Giải mã và xác thực chữ ký cookie bằng Web Crypto API không phụ thuộc network call ra ngoài.
+    - [x] Giảm kích thước bundle middleware từ `94.6 kB` xuống còn `34.5 kB` (giảm gần 3 lần), phản hồi tức thì.
+- [x] **Task 10.3: Dọn Dẹp Dịch Vụ Lưu Trữ Đa Môi Trường**
+  - File: `src/shared/storage/upload-service.ts`
+  - Chi tiết:
+    - [x] Loại bỏ Supabase Storage SDK, hỗ trợ lưu trữ tệp cục bộ và fallback tự động chuyển đổi sang Data URL trong môi trường serverless không ghi đĩa.
+- [x] **Task 10.4: Cấu Hình Tự Động Hóa Triển Khai Netlify & Kết Nối Neon Serverless**
+  - File: `netlify.toml`, `.env.example`, `.env.production.example`
+  - Chi tiết:
+    - [x] Thiết lập file `netlify.toml` tự động build và publish Next.js 15 trên hạ tầng Netlify.
+    - [x] Hướng dẫn cấu hình chuỗi kết nối Neon Serverless PostgreSQL với Connection Pooling qua port chuẩn.
+
+---
+
 ## 📦 KẾ HOẠCH CAM KẾT MÃ NGUỒN NGUYÊN TỬ (ATOMIC COMMITS ROADMAP)
 
 Để đảm bảo lịch sử Git sạch, rõ ràng và tuân thủ quy chuẩn **Conventional Commits**, toàn bộ quá trình phát triển được chia nhỏ thành các atomic commits tuần tự:
@@ -358,3 +384,5 @@
 | **27** | `500f99b` | `feat(seo)` | `feat(seo): implement dynamic sitemap, robots.txt and open-graph metadata` |
 | **28** | `175e24d` | `docs` | `docs: update PROGRESS.md with production hardening milestone` |
 | **29** | `f41a24f` | `fix(checkout)` | `fix(checkout): resolve buyerId typing in guest checkout resolution` |
+| **30** | `92fd72d` | `docs` | `docs: record commit 29 in PROGRESS.md roadmap` |
+| **31** | `b18014c` | `feat(infra)` | `feat(infra): migrate to decoupled netlify and neon serverless architecture` |
