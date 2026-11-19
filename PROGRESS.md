@@ -19,6 +19,7 @@
 │ [x] Giai đoạn 6: Kiểm thử Tích hợp & Concurrency (E2E)        100%     │
 │ [x] Giai đoạn 7: Hoàn thiện Tính năng Giai đoạn 2 (Should-Have) 100%   │
 │ [x] Giai đoạn 8: Đóng gói Docker & Vận hành Staging/Prod       100%    │
+│ [x] Giai đoạn 9: Sẵn Sàng Triển Khai Internet & Hardening       100%    │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -278,23 +279,81 @@
 
 ---
 
+### Giai đoạn 9: Sẵn Sàng Triển Khai Internet & Tăng Cường Bảo Mật (Production Hardening & Pre-flight Checklist)
+- [x] **Task 9.1: Vá Lỗ Hổng Phân Quyền & Chống IDOR (Broken Access Control - OWASP A01)**
+  - File: `src/middleware.ts`, `src/app/actions/vendor.ts`, `src/app/actions/order-lifecycle.ts`
+  - Chi tiết:
+    - [x] Middleware: Bắt buộc tài khoản mang vai trò `ADMIN` mới được truy cập `/admin/*`, điều hướng khách chưa đăng ký gian hàng tới `/vendor/onboarding`.
+    - [x] Server Action `adjustStockAction`: Ràng buộc danh tính người gọi, xác minh quyền sở hữu SKU thuộc sản phẩm của shop hiện tại trước khi sửa tồn kho.
+    - [x] Server Action `createProductAction`: Lấy trực tiếp `vendor.id` từ phiên đăng nhập an toàn, loại bỏ nguy cơ mạo danh shop khác tạo sản phẩm trái phép.
+    - [x] Server Action `updateVendorOrderStatusAction`: Kiểm tra quyền sở hữu đơn hàng con của xưởng trước khi đổi trạng thái giao hàng.
+    - [x] Server Actions `resolveDisputeAction` & `getAllDisputesForAdmin`: Kiểm tra triệt để vai trò `ADMIN` bảo vệ dữ liệu khiếu nại và phán quyết trọng tài.
+- [x] **Task 9.2: Xác Thực Dữ Liệu Đầu Vào Bằng Zod (DTO Sanitization - OWASP A03)**
+  - File: `src/shared/validation/schemas.ts`, `src/app/actions/checkout.ts`, `src/app/actions/vendor.ts`, `src/app/actions/order-lifecycle.ts`
+  - Chi tiết:
+    - [x] Xây dựng bộ Zod DTO Schemas: `checkoutSchema` (regex SĐT Việt Nam, whitelist thanh toán, lọc thẻ HTML), `createProductSchema`, `disputeSchema`, `reviewSchema`.
+    - [x] Tích hợp kiểm định dữ liệu tại `submitCheckoutAction`, `createProductAction`, `submitDisputeAction`, `submitReviewAction`.
+    - [x] Nâng cấp Guest Checkout: Tự động khởi tạo hồ sơ khách mua hàng độc lập thay vì dùng chung tài khoản mẫu.
+- [x] **Task 9.3: Bảo Mật HTTP Headers & Giới Hạn Tần Suất Gọi API (Rate Limiting)**
+  - File: `next.config.ts`, `src/shared/security/rate-limiter.ts`, `src/app/api/upload/route.ts`, `src/app/api/webhooks/payment/route.ts`
+  - Chi tiết:
+    - [x] Cấu hình HTTP Security Headers theo tiêu chuẩn OWASP: `Strict-Transport-Security` (HSTS), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection`, `Permissions-Policy`.
+    - [x] Xây dựng module In-memory Sliding Window Rate Limiter `rate-limiter.ts` hỗ trợ nhận diện client IP qua proxy headers và dọn dẹp bộ nhớ tự động.
+    - [x] Áp dụng hạn mức gọi API: `/api/upload` (tối đa 15 tệp/phút/IP), `/api/webhooks/payment` (tối đa 60 yêu cầu/phút/IP).
+- [x] **Task 9.4: Tối Ưu Kết Nối CSDL Đám Mây & SSL Hardening**
+  - File: `src/shared/db/index.ts`
+  - Chi tiết:
+    - [x] Thiết lập giới hạn kích thước pool kết nối `max: 10`, `idle_timeout: 20`, `connect_timeout: 10`.
+    - [x] Tự động kích hoạt cờ `ssl: "require"` khi chạy trên môi trường production cloud (Supabase / AWS / Railway).
+- [x] **Task 9.5: Giám Sát Sức Khỏe Hệ Thống & Xử Lý Lỗi Graceful**
+  - File: `src/app/api/health/route.ts`, `src/app/error.tsx`, `src/app/global-error.tsx`
+  - Chi tiết:
+    - [x] Xây dựng API probe `/api/health` thực hiện kiểm tra `SELECT 1` CSDL, đo độ trễ truy vấn (latencyMs) và uptime cho Cloud Load Balancers.
+    - [x] Xây dựng màn hình lỗi chuẩn thương hiệu `error.tsx` và `global-error.tsx` che giấu stack trace kỹ thuật trước mắt người dùng.
+- [x] **Task 9.6: Chuẩn Hóa SEO & Khám Phá Công Cộng (Search Engine Optimization)**
+  - File: `src/app/robots.ts`, `src/app/sitemap.ts`, `src/app/layout.tsx`
+  - Chi tiết:
+    - [x] Thiết lập `robots.ts` cho phép thu thập dữ liệu sản phẩm/gian hàng công khai, chặn truy cập bot vào `/admin/*`, `/vendor/*`, `/api/*`.
+    - [x] Xây dựng `sitemap.ts` động tự động truy vấn sản phẩm `PUBLISHED` và xưởng `ACTIVE` trong CSDL.
+    - [x] Hoàn thiện `layout.tsx` với `metadataBase`, OpenGraph, Twitter Cards và Canonical URL.
+- [x] **Task 9.7: Hồ Sơ Môi Trường Production & Tài Liệu Vận Hành**
+  - File: `.env.production.example`
+  - Chi tiết:
+    - [x] Biên soạn tài liệu mẫu `.env.production.example` hướng dẫn cấu hình toàn bộ các khóa bảo mật cho môi trường Internet.
+
+---
+
 ## 📦 KẾ HOẠCH CAM KẾT MÃ NGUỒN NGUYÊN TỬ (ATOMIC COMMITS ROADMAP)
 
-Để đảm bảo lịch sử Git sạch, rõ ràng và tuân thủ quy chuẩn **Conventional Commits**, toàn bộ mã nguồn hiện tại sẽ được chia nhỏ thành **14 commits tuần tự**:
+Để đảm bảo lịch sử Git sạch, rõ ràng và tuân thủ quy chuẩn **Conventional Commits**, toàn bộ quá trình phát triển được chia nhỏ thành các atomic commits tuần tự:
 
-| STT | Loại Commit | Tiêu đề Commit | Danh mục File bao gồm |
-| :---: | :--- | :--- | :--- |
-| **01** | `chore` | `chore: initialize project configuration, workspace and dependencies` | `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `tsconfig.json`, `next.config.ts`, `tailwind.config.ts`, `postcss.config.mjs`, `.gitignore`, `.env.example`, `next-env.d.ts` |
-| **02** | `docs` | `docs: add product requirements document (PRD) and design system specifications` | `docs/PRD.md`, `docs/DESIGN_SYSTEM.md`, `docs/ARCHITECTURE_GRAPH.md` |
-| **03** | `feat(db)` | `feat(db): implement drizzle orm schema and database seeding script` | `src/shared/db/schema.ts`, `src/shared/db/index.ts`, `drizzle.config.ts`, `scripts/seed.ts`, `src/shared/supabase/*` |
-| **04** | `feat(events)` | `feat(events): implement in-process domain event bus and transactional outbox` | `src/shared/events/event-bus.ts`, `src/shared/events/outbox-processor.ts` |
-| **05** | `feat(backend)` | `feat(backend): implement domain modules for auth, catalog, cart, order splitting, inventory and billing` | `src/modules/auth/*`, `src/modules/catalog/*`, `src/modules/cart/*`, `src/modules/order/*`, `src/modules/inventory/*`, `src/modules/billing/*`, `src/modules/vendor/*` |
-| **06** | `feat(actions)` | `feat(actions): implement next.js server actions and authentication middleware` | `src/app/actions/*`, `src/middleware.ts` |
-| **07** | `feat(ui)` | `feat(ui): implement sovereign design system layout, header, footer, tokens and cart context` | `src/app/globals.css`, `src/app/layout.tsx`, `src/components/layout/*`, `src/components/cart/CartContext.tsx` |
-| **08** | `feat(frontend)` | `feat(frontend): implement marketplace storefront and catalog search pages` | `src/app/page.tsx`, `src/app/search/page.tsx`, `src/components/catalog/ProductCard.tsx`, `src/components/search/*` |
-| **09** | `feat(frontend)` | `feat(frontend): implement product detail page with multi-sku selector and escrow badge` | `src/app/products/[slug]/page.tsx`, `src/components/catalog/ProductDetailClient.tsx` |
-| **10** | `feat(frontend)` | `feat(frontend): implement multi-vendor cart and order splitting checkout flow` | `src/app/cart/page.tsx`, `src/app/orders/[id]/*`, `src/components/order/OrderSuccessTrackingClient.tsx` |
-| **11** | `feat(frontend)` | `feat(frontend): implement vendor studio dashboard, onboarding, product creation and payouts` | `src/app/vendor/*`, `src/app/store/[slug]/*`, `src/components/vendor/*` |
-| **12** | `feat(frontend)` | `feat(frontend): implement buyer account, admin moderation and escrow dispute & review flows` | `src/app/account/*`, `src/app/admin/*`, `src/app/orders/[id]/dispute/*`, `src/app/orders/[id]/review/*`, `src/app/login/*`, `src/components/admin/*`, `src/components/order/*`, `src/components/auth/*`, `src/components/account/*` |
-| **13** | `test(e2e)` | `test(e2e): implement end-to-end integration test suite for multi-vendor lifecycle` | `scripts/test-e2e.ts` |
-| **14** | `docs` | `docs: add PROGRESS.md tracking project roadmap and milestones` | `PROGRESS.md` |
+| STT | Hash | Loại Commit | Tiêu đề Commit |
+| :---: | :---: | :--- | :--- |
+| **01** | `e1d4b0f` | `chore` | `chore: initialize project configuration, workspace and dependencies` |
+| **02** | `7d78076` | `docs` | `docs: add product requirements document (PRD) and design system specifications` |
+| **03** | `34839cf` | `feat(db)` | `feat(db): implement drizzle orm schema and database seeding script` |
+| **04** | `fcae2bd` | `feat(events)` | `feat(events): implement in-process domain event bus and transactional outbox` |
+| **05** | `ea6c83d` | `feat(backend)` | `feat(backend): implement domain modules for auth, catalog, cart, order splitting, inventory and billing` |
+| **06** | `ef20a5c` | `feat(actions)` | `feat(actions): implement next.js server actions and authentication middleware` |
+| **07** | `041f92e` | `feat(ui)` | `feat(ui): implement sovereign design system layout, header, footer, tokens and cart context` |
+| **08** | `b341f23` | `feat(frontend)` | `feat(frontend): implement marketplace storefront and catalog search pages` |
+| **09** | `1f3b392` | `feat(frontend)` | `feat(frontend): implement product detail page with multi-sku selector and escrow badge` |
+| **10** | `c21d89b` | `feat(frontend)` | `feat(frontend): implement multi-vendor cart and order splitting checkout flow` |
+| **11** | `5ca1029` | `feat(frontend)` | `feat(frontend): implement vendor studio dashboard, onboarding, product creation and payouts` |
+| **12** | `f4e0d58` | `feat(frontend)` | `feat(frontend): implement buyer account, admin moderation and escrow dispute & review flows` |
+| **13** | `cd5e12a` | `test(e2e)` | `test(e2e): implement end-to-end integration test suite for multi-vendor lifecycle` |
+| **14** | `74d351f` | `docs` | `docs: add PROGRESS.md tracking project roadmap and milestones` |
+| **15** | `c996dc6` | `feat(billing)` | `feat(billing): integrate dynamic VietQR payment gateway and webhook verification` |
+| **16** | `c2429cd` | `feat(storage)` | `feat(storage): implement image upload service, api route and vendor studio upload ui` |
+| **17** | `f48caa4` | `feat(vendor)` | `feat(vendor): implement real-time order notifier toast and live polling telemetry` |
+| **18** | `a6b3b14` | `feat(billing)` | `feat(billing): implement automated platform commission deduction and dynamic escrow ledger` |
+| **19** | `ac0439f` | `chore(docker)` | `chore(docker): create multi-stage alpine dockerfile and dockerignore for next.js standalone runtime` |
+| **20** | `82afb73` | `chore(docker)` | `chore(docker): add docker-compose configuration for postgres 16 and next.js web service` |
+| **21** | `bb18b97` | `ci(github)` | `ci(github): add github actions workflow for automated build and quality gate` |
+| **22** | `44c5f58` | `fix(security)` | `fix(security): enforce strict rbac and ownership checks against idor` |
+| **23** | `7dcc8fe` | `feat(security)` | `feat(security): implement zod input validation and sanitization dto` |
+| **24** | `1ac8936` | `feat(security)` | `feat(security): add owasp http security headers and api rate limiting` |
+| **25** | `d2e92d1` | `chore(db)` | `chore(db): configure postgres connection pooler limits and cloud ssl` |
+| **26** | `8f4362b` | `feat(observability)` | `feat(observability): add health check endpoint and production error boundary` |
+| **27** | `500f99b` | `feat(seo)` | `feat(seo): implement dynamic sitemap, robots.txt and open-graph metadata` |
+| **28** | `d4895ed` | `docs` | `docs: update PROGRESS.md with production hardening milestone` |
