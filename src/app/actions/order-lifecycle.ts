@@ -4,6 +4,7 @@ import { db, vendorOrders, masterOrders, disputes, reviews, users, products } fr
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/app/actions/auth";
+import { disputeSchema, reviewSchema } from "@/shared/validation/schemas";
 
 function safeRevalidate(path: string) {
   try {
@@ -96,12 +97,18 @@ export async function submitDisputeAction(data: {
   photos?: string[];
 }) {
   try {
+    const parsed = disputeSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || "Dữ liệu khiếu nại không hợp lệ." };
+    }
+    const validated = parsed.data;
+
     let buyerId: string;
-    if (data.buyerEmail) {
-      const [u] = await db.select().from(users).where(eq(users.email, data.buyerEmail));
+    if (validated.buyerEmail) {
+      const [u] = await db.select().from(users).where(eq(users.email, validated.buyerEmail));
       buyerId = u?.id || "";
     } else {
-      const [order] = await db.select().from(masterOrders).where(eq(masterOrders.id, data.masterOrderId));
+      const [order] = await db.select().from(masterOrders).where(eq(masterOrders.id, validated.masterOrderId));
       buyerId = order?.buyerId || "";
     }
 
@@ -116,19 +123,19 @@ export async function submitDisputeAction(data: {
       .insert(disputes)
       .values({
         disputeNumber,
-        masterOrderId: data.masterOrderId,
-        vendorOrderId: data.vendorOrderId,
+        masterOrderId: validated.masterOrderId,
+        vendorOrderId: validated.vendorOrderId,
         buyerId,
-        issueType: data.issueType,
-        description: data.description,
-        desiredResolution: data.desiredResolution,
-        photos: data.photos || [],
+        issueType: validated.issueType,
+        description: validated.description,
+        desiredResolution: validated.desiredResolution,
+        photos: validated.photos || [],
         status: "OPEN",
       })
       .returning();
 
-    safeRevalidate(`/orders/${data.masterOrderId}`);
-    safeRevalidate(`/orders/${data.masterOrderId}/dispute`);
+    safeRevalidate(`/orders/${validated.masterOrderId}`);
+    safeRevalidate(`/orders/${validated.masterOrderId}/dispute`);
     safeRevalidate("/admin");
 
     return { success: true, dispute };
@@ -238,9 +245,15 @@ export async function submitReviewAction(data: {
   isAnonymous?: boolean;
 }) {
   try {
+    const parsed = reviewSchema.safeParse(data);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.errors[0]?.message || "Dữ liệu đánh giá không hợp lệ." };
+    }
+    const validated = parsed.data;
+
     let buyerId: string = "";
-    if (data.buyerEmail) {
-      const [u] = await db.select().from(users).where(eq(users.email, data.buyerEmail));
+    if (validated.buyerEmail) {
+      const [u] = await db.select().from(users).where(eq(users.email, validated.buyerEmail));
       buyerId = u?.id || "";
     }
 
@@ -253,19 +266,19 @@ export async function submitReviewAction(data: {
       .insert(reviews)
       .values({
         buyerId,
-        productId: data.productId,
-        vendorOrderId: data.vendorOrderId || null,
-        rating: data.rating,
-        craftRating: data.craftRating ?? 5,
-        reviewText: data.reviewText,
-        images: data.images || [],
-        isAnonymous: data.isAnonymous ?? false,
+        productId: validated.productId,
+        vendorOrderId: validated.vendorOrderId || null,
+        rating: validated.rating,
+        craftRating: validated.craftRating ?? 5,
+        reviewText: validated.reviewText,
+        images: validated.images || [],
+        isAnonymous: validated.isAnonymous ?? false,
       })
       .returning();
 
     // ESCROW AUTO-RELEASE: If rating >= 4, auto-release early
-    if (data.rating >= 4 && data.vendorOrderId) {
-      console.log(`[Escrow] Early settlement release triggered for VendorOrder ${data.vendorOrderId} due to 5-star rating.`);
+    if (validated.rating >= 4 && validated.vendorOrderId) {
+      console.log(`[Escrow] Early settlement release triggered for VendorOrder ${validated.vendorOrderId} due to 5-star rating.`);
     }
 
     safeRevalidate("/");

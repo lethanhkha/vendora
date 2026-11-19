@@ -3,6 +3,7 @@
 import { updateSkuStock } from "@/modules/inventory/inventory-service";
 import { createProductWithSkuAndStock } from "@/modules/catalog/product-service";
 import { getCurrentUser } from "@/app/actions/auth";
+import { createProductSchema } from "@/shared/validation/schemas";
 import { db, products, productSkus } from "@/shared/db";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -68,7 +69,16 @@ export async function createProductAction(input: {
       return { success: false, error: "Vui lòng đăng nhập để đăng tải tác phẩm." };
     }
 
-    let targetVendorId = input.vendorId;
+    const parsed = createProductSchema.safeParse(input);
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.errors[0]?.message || "Thông tin tác phẩm không hợp lệ.",
+      };
+    }
+    const validatedInput = parsed.data;
+
+    let targetVendorId = validatedInput.vendorId;
 
     // Strict Tenant Isolation: Non-admin vendors can only create products for their own store
     if (user.role !== "ADMIN") {
@@ -85,7 +95,7 @@ export async function createProductAction(input: {
     }
 
     const result = await createProductWithSkuAndStock({
-      ...input,
+      ...validatedInput,
       vendorId: targetVendorId,
     });
 
