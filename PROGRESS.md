@@ -388,3 +388,5 @@
 | **31** | `b18014c` | `feat(infra)` | `feat(infra): migrate to decoupled netlify and neon serverless architecture` |
 | **32** | `688c35c` | `fix(seed)` | `fix(seed): add KEEB50K voucher to database seeder` |
 | **33** | `7e62e04` | `fix(deploy)` | `fix(deploy): whitelist NODE_ENV and DATABASE_SSL from netlify secrets scanner` |
+| **34** | `f8154a7` | `docs(prd)` | `docs(prd): update PRD to version 2.0 reflecting decoupled production architecture` |
+| **35** | `cc3d517` | `fix(checkout)` | `fix(checkout): resolve zod validation blocker, pdp aspect ratio, custom 404, and mobile search` |
