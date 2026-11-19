@@ -72,7 +72,7 @@ export function ProductDetailClient({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 bg-white rounded-3xl card-border p-6 sm:p-10">
         {/* Left: Gallery */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 card-border">
+          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 card-border">
             <Image
               src={product.imageUrl || "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1000&q=80"}
               alt={product.title}
@@ -91,7 +91,7 @@ export function ProductDetailClient({
           <div className="flex items-center gap-3">
             <div className="w-20 h-20 rounded-xl overflow-hidden relative card-border ring-2 ring-primary">
               <Image
-                src={product.imageUrl}
+                src={product.imageUrl || "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=400&q=80"}
                 alt="Thumbnail"
                 fill
                 className="object-cover"

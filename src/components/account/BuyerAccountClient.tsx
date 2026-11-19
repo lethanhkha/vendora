@@ -82,6 +82,38 @@ export function BuyerAccountClient({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const renderSubOrderStatus = (status?: string) => {
+    switch (status) {
+      case "CANCELLED":
+      case "REFUNDED":
+        return (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">
+            Đã Hủy / Hoàn Tiền
+          </span>
+        );
+      case "DELIVERED":
+        return (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+            Đã Giao Thành Công
+          </span>
+        );
+      case "SHIPPED":
+        return (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+            Đang Vận Chuyển
+          </span>
+        );
+      case "PROCESSING":
+      case "CONFIRMED":
+      default:
+        return (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+            Đang Xử Lý Gói Hàng
+          </span>
+        );
+    }
+  };
+
   const handleReorder = (order: MasterOrder) => {
     let count = 0;
     order.vendorOrders.forEach((vo) => {
@@ -366,9 +398,7 @@ export function BuyerAccountClient({
                             <span className="text-[9px] text-slate-400">({vo.vendor?.location})</span>
                           </div>
 
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                            Đang Xử Lý Gói Hàng
-                          </span>
+                          {renderSubOrderStatus(vo.status)}
                         </div>
 
                         {/* Items in Sub-order */}

@@ -72,14 +72,14 @@ export async function processCheckout(input: CheckoutInput) {
           skuId: item.skuId,
           productTitle: item.productTitle,
           quantity: item.quantity,
-          unitPrice: item.price,
+          unitPrice: item.price.toString(),
         });
 
         vendorItemsPayload.push({
           skuId: item.skuId,
           productTitle: item.productTitle,
           quantity: item.quantity,
-          unitPrice: item.price,
+          unitPrice: item.price.toString(),
         });
       }
 

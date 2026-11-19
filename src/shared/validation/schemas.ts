@@ -12,8 +12,9 @@ export const checkoutItemSchema = z.object({
   vendorSlug: z.string().min(1),
   price: z.union([z.string(), z.number()]),
   quantity: z.number().int().min(1, "Số lượng phải từ 1 trở lên"),
-  imageUrl: z.string().optional(),
-  attributes: z.record(z.string(), z.any()).optional(),
+  imageUrl: z.string().nullable().optional(),
+  attributes: z.record(z.string(), z.any()).nullable().optional(),
+  vendorLocation: z.string().nullable().optional(),
 });
 
 export const checkoutSchema = z.object({
@@ -36,7 +37,7 @@ export const checkoutSchema = z.object({
   paymentMethod: z.enum(["COD", "SANDBOX", "VIETQR"], {
     errorMap: () => ({ message: "Phương thức thanh toán không hợp lệ" }),
   }),
-  buyerEmail: z.string().email("Email không hợp lệ").optional(),
+  buyerEmail: z.string().email("Email không hợp lệ").nullable().optional().or(z.literal("")),
   items: z.array(checkoutItemSchema).min(1, "Giỏ hàng không được rỗng"),
   voucherDiscount: z.number().nonnegative().optional().default(0),
 });

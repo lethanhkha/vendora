@@ -89,7 +89,7 @@ export function Header() {
               className="w-full pl-10 pr-12 py-2.5 rounded-xl hairline-border bg-surface text-sm text-left text-ink-muted hover:border-hairline-hover focus:outline-none transition-[border-color] duration-200 relative cursor-pointer"
             >
               <Search className="w-4 h-4 text-ink-muted absolute left-3.5 top-3" />
-              <span>Tìm kiếm tác phẩm gốm, bàn phím cơ, đồ da mộc...</span>
+              <span className="truncate block pr-6">Tìm kiếm tác phẩm gốm, bàn phím cơ, đồ da mộc...</span>
               <span className="absolute right-3 top-2.5 px-1.5 py-0.5 rounded bg-canvas-warm text-[10px] font-medium text-ink-secondary hairline-border">
                 ⌘K
               </span>
@@ -97,7 +97,15 @@ export function Header() {
           </div>
 
           {/* Action Links & Cart */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile Search Icon Button */}
+            <button
+              onClick={() => setSearchModalOpen(true)}
+              aria-label="Tìm kiếm"
+              className="md:hidden p-2 text-ink-muted hover:text-ink rounded-xl hover:bg-canvas-warm hairline-border transition"
+            >
+              <Search className="w-4 h-4" />
+            </button>
             {/* Buyer Orders Quick Link */}
             <Link
               href="/account/orders"

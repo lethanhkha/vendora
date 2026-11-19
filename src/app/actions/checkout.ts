@@ -19,6 +19,7 @@ export async function submitCheckoutAction(data: {
     // 1. Zod DTO Input Validation and Sanitization
     const parseResult = checkoutSchema.safeParse(data);
     if (!parseResult.success) {
+      console.error("[submitCheckoutAction] Validation failed:", JSON.stringify(parseResult.error.format()));
       const firstError = parseResult.error.errors[0]?.message || "Thông tin đơn hàng không hợp lệ.";
       return {
         success: false,

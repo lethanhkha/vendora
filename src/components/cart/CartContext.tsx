@@ -14,46 +14,20 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Sample multi-vendor preloaded items matching Stitch Screen 3
-const INITIAL_DEMO_ITEMS: CartItem[] = [
-  {
-    skuId: "demo-sku-1",
-    productId: "demo-p-1",
-    productTitle: "Bàn Phím Cơ Gỗ Óc Chó FAS (Minimalist Walnut 75%)",
-    productSlug: "ban-phim-co-go-oc-cho-fas-75",
-    imageUrl: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=400&q=80",
-    price: "1850000",
-    quantity: 1,
-    attributes: { switch: "Linear Red", layout: "ANSI 75%" },
-    vendorId: "demo-v-1",
-    vendorName: "KeebCraft VN",
-    vendorSlug: "keebcraft-vn",
-    vendorLocation: "Ba Đình, Hà Nội",
-  },
-  {
-    skuId: "demo-sku-2",
-    productId: "demo-p-2",
-    productTitle: "Tấm Lót Bàn Làm Việc Da Bò Sáp Ý Thủ Công (Desk Mat 90x40cm)",
-    productSlug: "tam-lot-ban-da-bo-sap-y-90x40",
-    imageUrl: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=400&q=80",
-    price: "450000",
-    quantity: 1,
-    attributes: { color: "Nâu sáp cổ điển", size: "90x40cm" },
-    vendorId: "demo-v-2",
-    vendorName: "Aura Saigon Leather",
-    vendorSlug: "aura-saigon-leather",
-    vendorLocation: "Quận 1, TP. Hồ Chí Minh",
-  },
-];
-
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(INITIAL_DEMO_ITEMS);
+  const [items, setItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem("vendora_cart");
       if (saved) {
-        setItems(JSON.parse(saved));
+        const parsed: CartItem[] = JSON.parse(saved);
+        // Sanitize: strip out any legacy demo items that may have non-UUID ids
+        const clean = parsed.filter((it) => it && it.skuId && !it.skuId.startsWith("demo-"));
+        setItems(clean);
+        if (clean.length !== parsed.length) {
+          localStorage.setItem("vendora_cart", JSON.stringify(clean));
+        }
       }
     } catch (e) {}
   }, []);
