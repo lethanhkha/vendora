@@ -356,4 +356,5 @@
 | **25** | `d2e92d1` | `chore(db)` | `chore(db): configure postgres connection pooler limits and cloud ssl` |
 | **26** | `8f4362b` | `feat(observability)` | `feat(observability): add health check endpoint and production error boundary` |
 | **27** | `500f99b` | `feat(seo)` | `feat(seo): implement dynamic sitemap, robots.txt and open-graph metadata` |
-| **28** | `d4895ed` | `docs` | `docs: update PROGRESS.md with production hardening milestone` |
+| **28** | `175e24d` | `docs` | `docs: update PROGRESS.md with production hardening milestone` |
+| **29** | `f41a24f` | `fix(checkout)` | `fix(checkout): resolve buyerId typing in guest checkout resolution` |
