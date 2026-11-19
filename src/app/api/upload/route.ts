@@ -1,8 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadMediaFile } from "@/shared/storage/upload-service";
+import { rateLimiter, getClientIp } from "@/shared/security/rate-limiter";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate Limiting: 15 uploads per minute per IP
+    const ip = getClientIp(request.headers);
+    const limitCheck = rateLimiter.check(`upload:${ip}`, 15, 60000);
+
+    if (!limitCheck.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Bạn đã gửi quá nhiều yêu cầu tải lên (tối đa 15 tệp/phút). Vui lòng thử lại sau.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": Math.ceil(limitCheck.resetMs / 1000).toString(),
+          },
+        }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 

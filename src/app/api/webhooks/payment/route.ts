@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, masterOrders, vendorOrders } from "@/shared/db";
 import { eq, or } from "drizzle-orm";
+import { rateLimiter, getClientIp } from "@/shared/security/rate-limiter";
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate Limiting: 60 webhook calls per minute per IP
+    const ip = getClientIp(request.headers);
+    const limitCheck = rateLimiter.check(`webhook:${ip}`, 60, 60000);
+    if (!limitCheck.success) {
+      return NextResponse.json(
+        { error: "Too many webhook requests. Please try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": Math.ceil(limitCheck.resetMs / 1000).toString(),
+          },
+        }
+      );
+    }
     const body = await request.json();
     const { orderNumber, orderId, amount, transactionId, secret } = body;
 
