@@ -386,3 +386,5 @@
 | **29** | `f41a24f` | `fix(checkout)` | `fix(checkout): resolve buyerId typing in guest checkout resolution` |
 | **30** | `92fd72d` | `docs` | `docs: record commit 29 in PROGRESS.md roadmap` |
 | **31** | `b18014c` | `feat(infra)` | `feat(infra): migrate to decoupled netlify and neon serverless architecture` |
+| **32** | `688c35c` | `fix(seed)` | `fix(seed): add KEEB50K voucher to database seeder` |
+| **33** | `7e62e04` | `fix(deploy)` | `fix(deploy): whitelist NODE_ENV and DATABASE_SSL from netlify secrets scanner` |
