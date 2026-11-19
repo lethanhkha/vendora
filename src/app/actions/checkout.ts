@@ -30,18 +30,19 @@ export async function submitCheckoutAction(data: {
 
     // 2. Resolve Buyer Profile (Logged-in User or Dedicated Guest Profile)
     const sessionUser = await getCurrentUser();
-    let buyer = sessionUser;
+    let buyerId = sessionUser?.id;
 
-    if (!buyer) {
+    if (!buyerId) {
       const cleanPhone = validatedData.recipientPhone.replace(/[^0-9]/g, "");
       const guestEmail =
         validatedData.buyerEmail ||
         `guest_${cleanPhone || Date.now().toString()}@guest.vendora.vn`;
-      buyer = await getOrCreateUser(guestEmail, validatedData.recipientName);
+      const guestUser = await getOrCreateUser(guestEmail, validatedData.recipientName);
+      buyerId = guestUser.id;
     }
 
     const input: CheckoutInput = {
-      buyerId: buyer.id,
+      buyerId,
       recipientName: validatedData.recipientName,
       recipientPhone: validatedData.recipientPhone,
       shippingAddress: validatedData.shippingAddress,
