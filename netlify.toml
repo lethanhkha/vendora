@@ -9,6 +9,7 @@
 [build.environment]
   NODE_VERSION = "20"
   PNPM_FLAGS = "--frozen-lockfile"
+  SECRETS_SCAN_OMIT_KEYS = "NODE_ENV,DATABASE_SSL"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
